@@ -3,9 +3,9 @@ import { Message } from 'iview'
 
 import { emitterMixins } from 'utils'
 
-import './icons'
-
 import message from '@/libs/mixins/message'
+
+import '@/libs/icons'
 
 /**
  * 注册全局组件

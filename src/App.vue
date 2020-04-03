@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <img alt="Vue logo" src="./assets/logo.png" />
+    <SvgIcon icon-class="email" />
     <HelloWorld msg="Welcome to Your Vue.js App" />
     <!-- template中使用环境变量 -->
     API: {{ api }}

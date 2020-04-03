@@ -1,14 +1,13 @@
 const path = require('path')
 const fs = require('fs')
 const resolve = dir => path.join(__dirname, dir)
+const IS_PROD = ['production', 'prod'].includes(process.env.NODE_ENV)
+const IS_DEV = ['development'].includes(process.env.NODE_ENV)
 
 const argv = JSON.parse(process.env.npm_config_argv)
 const cooked = argv.cooked[2] === '-test' ? '-test' : '-formal' //默认使用正式环境的cdn地址
 const isFormal = cooked === '-formal'
 const cdnURL = isFormal ? '//wecloud-fe-res' : '//wecloud-res-test'
-
-const IS_PROD = ['production', 'prod'].includes(process.env.NODE_ENV)
-const IS_DEV = ['development'].includes(process.env.NODE_ENV)
 
 const addStylusResource = rule => {
   rule
@@ -18,25 +17,6 @@ const addStylusResource = rule => {
       patterns: [resolve('src/assets/stylus/variable.styl')]
     })
 }
-/**
- * 多页面
- */
-
-const glob = require('glob')
-const pagesInfo = require('./pages.config')
-const pages = {}
-
-glob.sync('./src/pages/**/main.js').forEach(entry => {
-  let chunk = entry.match(/\.\/src\/pages\/(.*)\/main\.js/)[1]
-  const curr = pagesInfo[chunk]
-  if (curr) {
-    pages[chunk] = {
-      entry,
-      ...curr,
-      chunk: ['chunk-vendors', 'chunk-common', chunk]
-    }
-  }
-})
 
 module.exports = {
   publicPath: IS_PROD ? process.env.VUE_APP_PUBLIC_PATH : './', // 默认'/'，部署应用包时的基本 URL
@@ -58,29 +38,13 @@ module.exports = {
       js: [`${cdnURL}.oss-cn-hangzhou.aliyuncs.com/platform/core.js`]
     }
 
-    // 如果使用多页面打包，使用vue inspect --plugins查看html是否在结果数组中
-    // config.plugin('html').tap(args => {
-    //   // html中添加cdn
-    //   args[0].cdn = cdn
+    config.plugin('html').tap(args => {
+      // html中添加cdn
+      args[0].cdn = cdn
 
-    //   // 修复 Lazy loading routes Error
-    //   args[0].chunksSortMode = 'none'
-    //   return args
-    // })
-
-    // 防止多页面打包卡顿
-    config => config.plugins.delete('named-chunks')
-
-    // 多页面cdn添加
-    Object.keys(pagesInfo).forEach(page => {
-      config.plugin(`html-${page}`).tap(args => {
-        // html中添加cdn
-        args[0].cdn = cdn
-
-        // 修复 Lazy loading routes Error
-        args[0].chunksSortMode = 'none'
-        return args
-      })
+      // 修复 Lazy loading routes Error
+      args[0].chunksSortMode = 'none'
+      return args
     })
 
     if (IS_PROD) {
@@ -117,7 +81,7 @@ module.exports = {
         symbolId: 'icon-[name]'
       })
     const imagesRule = config.module.rule('images')
-    imagesRule.exclude.add(resolve('src/icons'))
+    imagesRule.exclude.add(resolve('src/assets/svg'))
     config.module.rule('images').test(/\.(png|jpe?g|gif|svg)(\?.*)?$/)
 
     // 添加别名
@@ -162,7 +126,7 @@ module.exports = {
     //   warnings: true,
     //   errors: true
     // },
-    open: false, // 是否打开浏览器
+    open: true, // 是否打开浏览器
     // host: "localhost",
     // port: "8080", // 代理断就
     // https: false,
